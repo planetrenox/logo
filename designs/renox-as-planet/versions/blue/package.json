@@ -1,14 +1,14 @@
 {
-  "name": "logo",
+  "name": "renox-as-planet-blue",
   "private": true,
   "type": "module",
-  "description": "Planet Renox logo designs, written as code",
+  "description": "Renox as a planet, blue ocean version",
+  "scripts": {
+    "build": "bun index.js"
+  },
   "dependencies": {
     "@fontsource/unbounded": "^5.3.0",
     "@resvg/resvg-js": "^2.6.2",
     "opentype.js": "^2.0.0"
-  },
-  "scripts": {
-    "build": "bun designs/renox-as-planet/index.js"
   }
 }

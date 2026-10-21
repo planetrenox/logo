@@ -5,7 +5,7 @@ import { Resvg } from '@resvg/resvg-js'
 import { readFileSync, writeFileSync } from 'fs'
 
 const at = p => new URL(p, import.meta.url)
-const fb = readFileSync(at('../../node_modules/@fontsource/unbounded/files/unbounded-latin-900-normal.woff'))
+const fb = readFileSync(at('node_modules/@fontsource/unbounded/files/unbounded-latin-900-normal.woff'))
 const font = opentype.parse(fb.buffer.slice(fb.byteOffset, fb.byteOffset + fb.byteLength))
 
 const { sin, cos, hypot, ceil, min, max, PI } = Math
