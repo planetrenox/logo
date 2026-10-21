@@ -73,11 +73,11 @@ const outside = cells.filter(c => c.state == 'solid' && c.c[2] > 0).sort(byDepth
 const sockets = cells.filter(c => c.state == 'flying')
   .map(({ q, c }) => `<path d="${poly(tile(q, c))}"/>`).join('')
 // flying tiles drift in from the upper right, lifted off their sockets
-const flying = cells.filter(c => c.state == 'flying').map(({ q, c }, i) => {
+const flights = cells.filter(c => c.state == 'flying').map(({ q, c }, i) => {
   const o = [.8, .55, .25].map((v, j) => v * FLIGHTS[i] + c[j] * .05)
-  const t = tile(q, c, GAP * 1.04).map(p => p.map((v, k) => v + o[k])), [a, b] = [c, c.map((v, k) => v + o[k])].map(v => xy(v).map(n).join(' '))
-  return `<path d="M${a}L${b}" class="trail"/><path d="${poly(t)}" fill="${ramp(ORANGE, .3 + .45 * lit(c))}"/>`
-}).join('')
+  return { c, t: tile(q, c, GAP * 1.04).map(p => p.map((v, k) => v + o[k])), to: c.map((v, k) => v + o[k]) }
+})
+const flying = flights.map(({ c, t, to }) => `<path d="M${[c, to].map(v => xy(v).map(n).join(' ')).join('L')}" class="trail"/><path d="${poly(t)}" fill="${ramp(ORANGE, .3 + .45 * lit(c))}"/>`).join('')
 
 // wordmark, laid out glyph by glyph so the tracking can be opened up
 const word = (text, size, track, y) => {
@@ -92,12 +92,23 @@ const wordmark = word('RENOX', 124, .16, 985)
 const THEMES = {
   dark: { bg: '#0b0a24', ink: '#ffffff', wire: '#8c95ff', ghost: '#5b63d9', back: .28 },
   light: { bg: '#f5f4ff', ink: '#16123f', wire: '#4a4fd1', ghost: '#8d92e8', back: .16 },
-  mark: { wire: '#6f78f2', ghost: '#7f86e6', back: .2 },
+  transparent: { wire: '#6f78f2', ghost: '#7f86e6', back: .2 },
 }
-const svg = ({ bg, ink, wire: w, ghost, back }) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${S} ${ink ? S : S * .84}" width="${S}" height="${ink ? S : S * .84}">
+// zoom crops: a square tight round the planet, just wide enough for the incoming tiles
+const reach = max(R, ...flights.flatMap(f => f.t.map(xy)).flatMap(([x, y]) => [abs(x - CX), abs(y - CY)])) + 24
+const ZOOM = [CX - reach, CY - reach, reach * 2, reach * 2].map(n)
+const OUT = {
+  'logo-dark': [THEMES.dark, [0, 0, S, S], 1],
+  'logo-light': [THEMES.light, [0, 0, S, S], 1],
+  mark: [THEMES.transparent, [0, CY - S * .42, S, S * .84]],
+  'zoom-dark': [THEMES.dark, ZOOM],
+  'zoom-light': [THEMES.light, ZOOM],
+  'zoom-transparent': [THEMES.transparent, ZOOM],
+}
+const svg = ({ bg, ink, wire: w, ghost, back }, [vx, vy, vw, vh], text) => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vx} ${vy} ${vw} ${vh}" width="${vw}" height="${vh}">
 <style>.trail{stroke:${ORANGE[2]};stroke-width:2.5;stroke-dasharray:2 7;stroke-linecap:round;opacity:.8}</style>
-${bg ? `<rect width="100%" height="100%" fill="${bg}"/>` : ''}
-<g transform="translate(0 ${ink ? 0 : -CY + S * .42})">
+${bg ? `<rect x="${vx}" y="${vy}" width="${vw}" height="${vh}" fill="${bg}"/>` : ''}
+<g>
   <circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${ghost}" stroke-width="2.5" stroke-dasharray="1 11" stroke-linecap="round"/>
   <path d="${wire(f => !f)}" fill="none" stroke="${w}" stroke-width="1.4" opacity="${back}"/>
   <g fill="${w}" opacity="${back}">${dots(f => !f, 2)}</g>
@@ -108,11 +119,11 @@ ${bg ? `<rect width="100%" height="100%" fill="${bg}"/>` : ''}
   <g fill="none" stroke="${ORANGE[2]}" stroke-width="2.4" stroke-dasharray="7 6" stroke-linejoin="round">${sockets}</g>
   ${flying}
 </g>
-${ink ? `<path d="${wordmark}" fill="${ink}"/>` : ''}
+${text ? `<path d="${wordmark}" fill="${ink}"/>` : ''}
 </svg>`
 
-for (const [name, theme] of Object.entries(THEMES)) {
-  const s = svg(theme), file = name == 'mark' ? 'mark' : 'logo-' + name
+for (const [file, [theme, view, text]] of Object.entries(OUT)) {
+  const s = svg(theme, view, text)
   writeFileSync(at(file + '.svg'), s)
   writeFileSync(at(file + '.png'), new Resvg(s, { fitTo: { mode: 'width', value: 2048 } }).render().asPng())
 }
