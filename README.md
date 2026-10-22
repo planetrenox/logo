@@ -7,11 +7,6 @@ bun install
 bun run build
 ```
 
-## renox-as-planet
-
-| version | |
-| --- | --- |
-| [blue](designs/renox-as-planet/versions/blue) | <img src="designs/renox-as-planet/versions/blue/logo.png" width="320" alt="Renox as a planet, blue"> |
 
 ## planet-in-progress
 
